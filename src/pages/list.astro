@@ -1,0 +1,395 @@
+---
+/**
+ * Shopping List Page (list.astro)
+ *
+ * Displays all items in the cart with quantity controls,
+ * level costs, and a combined Bill of Materials.
+ */
+
+import Layout from '../components/astro/Layout.astro';
+import { CartItemList } from '../components/solid/CartItemList.tsx';
+import { CombinedMaterials } from '../components/solid/CombinedMaterials.tsx';
+import { QuickCraftModal, type RecipeModalData } from '../components/solid/QuickCraftModal.tsx';
+import { getAllRecipes } from '../data/recipe-lookup.js';
+import { generateBOM } from '../engine/bom.js';
+
+// Pre-compute recipe data for Quick Craft modal and shopping list
+const allRecipes = getAllRecipes();
+const recipesForModal: Record<string, RecipeModalData> = {};
+for (const recipe of allRecipes) {
+  recipesForModal[recipe.id] = {
+    id: recipe.id,
+    name: recipe.name,
+    tree: recipe.tree,
+    bom: generateBOM(recipe.tree),
+  };
+}
+
+// Pre-compute BOMs for Combined Materials (done at build time)
+const recipeBOMs: Record<string, import('../types/index.js').BillOfMaterials> = {};
+for (const recipe of allRecipes) {
+  recipeBOMs[recipe.id] = generateBOM(recipe.tree);
+}
+---
+
+<Layout title="Shopping List">
+  <!-- Page header -->
+  <header class="page-header">
+    <h1>Shopping List</h1>
+    <p class="page-subtitle">Your items to craft and materials needed.</p>
+  </header>
+
+  <!-- Main content -->
+  <div class="shopping-list-content">
+    <!-- Cart Items Section -->
+    <section class="shopping-list-section" aria-labelledby="items-heading">
+      <h2 id="items-heading" class="section-heading">Items to Craft</h2>
+      <CartItemList client:load recipes={recipesForModal} />
+    </section>
+
+    <!-- Combined Materials Section -->
+    <section class="shopping-list-section" aria-labelledby="materials-heading">
+      <h2 id="materials-heading" class="section-heading">Combined Materials</h2>
+      <CombinedMaterials client:load recipeBOMs={recipeBOMs} />
+    </section>
+  </div>
+
+  <!-- Quick Craft Modal (Solid.js island) -->
+  <QuickCraftModal client:load recipes={recipesForModal} />
+</Layout>
+
+<style>
+  /* ─────────────────────────────────────────────────────────────
+   * Page Header
+   * ───────────────────────────────────────────────────────────── */
+
+  .page-header {
+    text-align: center;
+    padding-block: var(--space-lg);
+    margin-bottom: var(--space-lg);
+  }
+
+  .page-header h1 {
+    margin-bottom: var(--space-xs);
+  }
+
+  .page-subtitle {
+    font-size: var(--text-base);
+    color: var(--mc-light-gray);
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * Shopping List Content
+   * ───────────────────────────────────────────────────────────── */
+
+  .shopping-list-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  @media (min-width: 900px) {
+    .shopping-list-content {
+      grid-template-columns: 1fr 1fr;
+      align-items: start;
+    }
+  }
+
+  .shopping-list-section {
+    background-color: var(--mc-dark-gray);
+    border: 2px solid var(--mc-black);
+    border-top-color: var(--mc-gray);
+    border-left-color: var(--mc-gray);
+    padding: var(--space-md);
+  }
+
+  .section-heading {
+    font-size: var(--text-lg);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid var(--mc-gray);
+  }
+</style>
+
+<style is:global>
+  /* ─────────────────────────────────────────────────────────────
+   * Cart Item List Component Styles
+   * ───────────────────────────────────────────────────────────── */
+
+  .cart-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .cart-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background-color: var(--mc-slot-bg);
+    border: 2px solid var(--mc-panel-border-light);
+    border-top-color: var(--mc-panel-border-dark);
+    border-left-color: var(--mc-panel-border-dark);
+  }
+
+  .cart-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+  }
+
+  .cart-item-name {
+    font-size: var(--text-base);
+    color: var(--mc-aqua);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cart-item-cost {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--mc-gold);
+    white-space: nowrap;
+  }
+
+  .cart-item-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+  }
+
+  .cart-item-quantity {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .qty-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: var(--text-base);
+    font-weight: bold;
+    color: var(--mc-white);
+    background-color: var(--mc-gray);
+    border: 2px solid var(--mc-panel-border-dark);
+    border-top-color: var(--mc-panel-border-light);
+    border-left-color: var(--mc-panel-border-light);
+    cursor: pointer;
+  }
+
+  .qty-btn:hover:not(:disabled) {
+    background-color: var(--mc-light-gray);
+    color: var(--mc-black);
+  }
+
+  .qty-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .qty-btn:focus-visible {
+    outline: 2px solid var(--mc-gold);
+    outline-offset: 2px;
+  }
+
+  .qty-value {
+    min-width: 30px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    color: var(--mc-white);
+  }
+
+  .cart-item-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .cart-action-btn {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-xs);
+    color: var(--mc-light-gray);
+    background-color: var(--mc-gray);
+    border: 2px solid var(--mc-panel-border-dark);
+    border-top-color: var(--mc-panel-border-light);
+    border-left-color: var(--mc-panel-border-light);
+    cursor: pointer;
+  }
+
+  .cart-action-btn:hover {
+    background-color: var(--mc-light-gray);
+    color: var(--mc-black);
+  }
+
+  .cart-action-btn:focus-visible {
+    outline: 2px solid var(--mc-gold);
+    outline-offset: 2px;
+  }
+
+  .cart-action-btn--danger:hover {
+    background-color: var(--mc-dark-red);
+    color: var(--mc-white);
+  }
+
+  /* Grand Total */
+  .cart-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm);
+    margin-top: var(--space-md);
+    background-color: var(--mc-purple);
+    border: 2px solid var(--mc-black);
+    border-top-color: var(--mc-light-purple);
+    border-left-color: var(--mc-light-purple);
+  }
+
+  .cart-total-label {
+    font-size: var(--text-base);
+    color: var(--mc-white);
+  }
+
+  .cart-total-value {
+    font-family: var(--font-mono);
+    font-size: var(--text-lg);
+    font-weight: bold;
+    color: var(--mc-gold);
+  }
+
+  /* Cart Actions */
+  .cart-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 2px solid var(--mc-gray);
+  }
+
+  /* Empty State */
+  .cart-empty {
+    padding: var(--space-xl);
+    text-align: center;
+  }
+
+  .cart-empty-icon {
+    font-size: 3rem;
+    margin-bottom: var(--space-md);
+    opacity: 0.5;
+  }
+
+  .cart-empty-title {
+    font-size: var(--text-lg);
+    color: var(--mc-light-gray);
+    margin-bottom: var(--space-sm);
+  }
+
+  .cart-empty-description {
+    font-size: var(--text-sm);
+    color: var(--mc-gray);
+    margin-bottom: var(--space-md);
+  }
+
+  .cart-empty-link {
+    color: var(--mc-aqua);
+    text-decoration: underline;
+  }
+
+  .cart-empty-link:hover {
+    color: var(--mc-white);
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * Combined Materials Component Styles
+   * ───────────────────────────────────────────────────────────── */
+
+  .combined-materials {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .materials-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .materials-group-title {
+    font-size: var(--text-sm);
+    color: var(--mc-light-gray);
+    margin-bottom: var(--space-xs);
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--mc-gray);
+  }
+
+  .material-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    background-color: var(--mc-slot-bg);
+    border: 2px solid var(--mc-panel-border-light);
+    border-top-color: var(--mc-panel-border-dark);
+    border-left-color: var(--mc-panel-border-dark);
+  }
+
+  .material-item--base {
+    border-color: var(--mc-gold);
+    border-top-color: var(--mc-yellow);
+    border-left-color: var(--mc-yellow);
+  }
+
+  .material-qty {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--mc-light-gray);
+    min-width: 30px;
+  }
+
+  .material-name {
+    flex: 1;
+    font-size: var(--text-sm);
+    color: var(--mc-aqua);
+  }
+
+  .material-item--base .material-name {
+    color: var(--mc-gold);
+  }
+
+  .materials-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+    padding-top: var(--space-md);
+    border-top: 2px solid var(--mc-gray);
+  }
+
+  .materials-empty {
+    padding: var(--space-lg);
+    text-align: center;
+    color: var(--mc-gray);
+    font-size: var(--text-sm);
+  }
+
+  /* Copy/Export button states */
+  .btn-copy--copied {
+    background-color: var(--mc-dark-green) !important;
+    color: var(--mc-green) !important;
+  }
+</style>

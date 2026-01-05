@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mc-enchants.b28.dev/sitemap-index.xml

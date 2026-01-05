@@ -1,0 +1,302 @@
+---
+/**
+ * RecipeCard Component
+ *
+ * Displays a recipe card in the catalog with Minecraft tooltip styling,
+ * item icon, enchantments list, and action buttons.
+ */
+
+import type { RecipeData } from '../../data/recipe-lookup.js';
+import { formatEnchantments } from '../../utils/format.js';
+
+interface Props {
+  /** Recipe data including computed tree and metadata */
+  recipe: RecipeData;
+  /** Data attribute: recipe name for filtering */
+  'data-name'?: string;
+  /** Data attribute: recipe tags for filtering */
+  'data-tags'?: string;
+  /** Data attribute: recipe category for filtering */
+  'data-category'?: string;
+  /** Data attribute: recipe cost for sorting */
+  'data-cost'?: number;
+}
+
+const { recipe, ...dataAttrs } = Astro.props;
+
+const formattedEnchantments = formatEnchantments(recipe.enchantments);
+
+/**
+ * Convert baseItem string to icon filename.
+ * e.g., "netherite_sword" -> "minecraft_netherite_sword"
+ *       "bow" -> "minecraft_bow"
+ */
+function getIconPath(baseItem: string): string {
+  // Handle "gold_" -> "golden_" mapping (Minecraft naming convention)
+  let normalized = baseItem;
+  if (normalized.startsWith('gold_')) {
+    normalized = 'golden_' + normalized.slice(5);
+  }
+  return `/items/minecraft_${normalized}.png`;
+}
+
+/**
+ * Get display name from baseItem string.
+ * e.g., "netherite_sword" -> "Netherite Sword"
+ */
+function getDisplayName(baseItem: string): string {
+  return baseItem
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+const iconPath = getIconPath(recipe.baseItem);
+const itemDisplayName = getDisplayName(recipe.baseItem);
+---
+
+<article class="recipe-card" data-recipe-id={recipe.id} {...dataAttrs}>
+  <!-- Tooltip-style content area -->
+  <div class="recipe-card-tooltip">
+    <!-- Level cost badge -->
+    <span class="recipe-card-cost">
+      {recipe.totalLevelCost}
+      <span class="recipe-card-cost-suffix">lvl</span>
+    </span>
+
+    <!-- Item icon and name -->
+    <img src={iconPath} alt="" class="recipe-card-icon" />
+    <span class="recipe-card-item-name">{itemDisplayName}</span>
+
+    <!-- Enchantments list -->
+    <div class="recipe-card-enchants">
+      {formattedEnchantments.map((enchant) => (
+        <span class="recipe-card-enchant">{enchant}</span>
+      ))}
+    </div>
+  </div>
+
+  <!-- Card header with recipe name -->
+  <header class="recipe-card-header">
+    <h3 class="recipe-card-title">{recipe.name}</h3>
+  </header>
+
+  <!-- Action buttons -->
+  <footer class="recipe-card-footer">
+    <button
+      type="button"
+      class="btn btn-secondary btn-sm quick-craft-btn"
+      data-recipe-id={recipe.id}
+      aria-label={`Quick craft ${recipe.name}`}
+    >
+      Quick Craft
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary btn-sm add-to-list-btn"
+      data-recipe-id={recipe.id}
+      data-recipe-name={recipe.name}
+      data-recipe-levels={recipe.totalLevelCost}
+      aria-label={`Add ${recipe.name} to shopping list`}
+    >
+      Add to List
+    </button>
+  </footer>
+</article>
+
+<style>
+  /* Recipe card container */
+  .recipe-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    min-width: 200px;
+    max-width: 280px;
+  }
+
+  /* Tooltip-style content area - matches craft tree node styling */
+  .recipe-card-tooltip {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: var(--space-sm);
+    text-align: center;
+    box-sizing: border-box;
+
+    /* Minecraft tooltip colors */
+    background-color: #100010;
+    border: 2px solid #28007f;
+    border-top-color: #28007f;
+    border-left-color: #28007f;
+    border-right-color: #5000ff;
+    border-bottom-color: #5000ff;
+
+    /* Minecraft tooltip styling */
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px #010001, 0 0 8px 2px rgba(16, 0, 16, 0.8);
+  }
+
+  /* Level cost badge - top right */
+  .recipe-card-cost {
+    position: absolute;
+    top: var(--space-xs);
+    right: var(--space-xs);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--mc-gold);
+    font-weight: 500;
+  }
+
+  .recipe-card-cost-suffix {
+    font-size: var(--text-xs);
+    color: var(--mc-light-gray);
+    margin-left: 2px;
+  }
+
+  /* Item icon */
+  .recipe-card-icon {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    flex-shrink: 0;
+  }
+
+  /* Item name - aqua like Minecraft item tooltips */
+  .recipe-card-item-name {
+    font-size: 0.7em;
+    font-weight: 400;
+    opacity: 0.8;
+    white-space: nowrap;
+    color: var(--mc-aqua);
+    font-style: italic;
+  }
+
+  /* Enchantments list */
+  .recipe-card-enchants {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: stretch;
+    gap: 1px;
+    margin-top: 4px;
+  }
+
+  .recipe-card-enchant {
+    font-size: var(--text-xs);
+    color: var(--mc-light-purple);
+    white-space: nowrap;
+  }
+
+  /* Card header with recipe name */
+  .recipe-card-header {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .recipe-card-title {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
+    text-shadow: 1px 1px 0 var(--mc-black);
+    margin: 0;
+  }
+
+  /* Footer with action buttons */
+  .recipe-card-footer {
+    display: flex;
+    gap: var(--space-xs);
+    margin-top: auto;
+  }
+
+  .recipe-card-footer .btn {
+    flex: 1;
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-xs);
+  }
+
+  @media (max-width: 640px) {
+    .recipe-card {
+      min-width: auto;
+      max-width: none;
+    }
+
+    .recipe-card-footer {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Client-side script for RecipeCard interactions.
+   * Handles Quick Craft and Add to List button clicks.
+   */
+
+  // Wait for DOM to be ready
+  document.addEventListener('DOMContentLoaded', initRecipeCardButtons);
+  // Also run immediately in case DOM is already loaded
+  if (document.readyState !== 'loading') {
+    initRecipeCardButtons();
+  }
+
+  function initRecipeCardButtons(): void {
+    // Quick Craft buttons - dispatch custom event for modal
+    document.querySelectorAll('.quick-craft-btn').forEach((btn) => {
+      if (btn.hasAttribute('data-initialized')) return;
+      btn.setAttribute('data-initialized', 'true');
+
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget as HTMLButtonElement;
+        const recipeId = target.dataset.recipeId;
+
+        // Dispatch custom event for modal system (to be implemented later)
+        window.dispatchEvent(new CustomEvent('quick-craft', {
+          detail: { recipeId },
+        }));
+      });
+    });
+
+    // Add to List buttons - add recipe to cart
+    document.querySelectorAll('.add-to-list-btn').forEach((btn) => {
+      if (btn.hasAttribute('data-initialized')) return;
+      btn.setAttribute('data-initialized', 'true');
+
+      btn.addEventListener('click', async (e) => {
+        const target = e.currentTarget as HTMLButtonElement;
+        const recipeId = target.dataset.recipeId;
+        const recipeName = target.dataset.recipeName;
+        const recipeLevels = parseInt(target.dataset.recipeLevels ?? '0', 10);
+
+        if (!recipeId || !recipeName) return;
+
+        try {
+          // Dynamic import to avoid bundling cart store in initial load
+          const { add } = await import('../../stores/cart.js');
+
+          add({
+            id: recipeId,
+            name: recipeName,
+            totalLevels: recipeLevels,
+          });
+
+          // Dispatch event to update cart badge
+          window.dispatchEvent(new Event('cart-updated'));
+
+          // Visual feedback - brief button state change
+          target.textContent = 'Added!';
+          target.disabled = true;
+
+          setTimeout(() => {
+            target.textContent = 'Add to List';
+            target.disabled = false;
+          }, 1000);
+        } catch (err) {
+          console.error('Failed to add to cart:', err);
+        }
+      });
+    });
+  }
+</script>

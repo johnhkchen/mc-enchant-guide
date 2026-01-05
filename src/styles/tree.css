@@ -1,0 +1,623 @@
+/**
+ * Crafting Tree Styles - Nested Flexbox Layout with CSS Connectors
+ *
+ * Layout approach:
+ * - Nested HTML mirrors tree structure (children inside parent)
+ * - Flexbox handles all positioning
+ * - Pseudo-elements draw connector lines
+ * - No JavaScript layout calculations needed
+ */
+
+/* ─────────────────────────────────────────────────────────────
+ * CSS Custom Properties
+ * ───────────────────────────────────────────────────────────── */
+
+.crafting-tree {
+  --tree-connector-color: var(--mc-gray);
+  --tree-connector-width: 2px;
+  --tree-vertical-gap: 32px; /* Total space between levels */
+  --tree-horizontal-gap: 8px; /* Space between siblings */
+  --tree-connector-height: 16px; /* Half of vertical-gap so lines meet in middle */
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Main Container
+ * ───────────────────────────────────────────────────────────── */
+
+.crafting-tree {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.crafting-tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--mc-gray);
+  flex-shrink: 0;
+}
+
+.crafting-tree-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.crafting-tree-title {
+  font-size: var(--text-lg);
+  color: var(--color-text-primary);
+}
+
+.crafting-tree-progress {
+  font-size: var(--text-sm);
+  color: var(--mc-gold);
+  font-family: var(--font-mono);
+}
+
+.crafting-tree-reset {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-xs);
+  color: var(--mc-light-gray);
+  background: transparent;
+  border: 1px solid var(--mc-gray);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.crafting-tree-reset:hover {
+  color: var(--mc-white);
+  border-color: var(--mc-light-gray);
+}
+
+/* Floating reset button - bottom left */
+.crafting-tree-reset-float {
+  position: absolute;
+  bottom: var(--space-sm);
+  left: var(--space-sm);
+  z-index: 10;
+  background-color: #8b4513;
+  color: var(--mc-white);
+}
+
+.crafting-tree-reset-float:hover:not(:disabled) {
+  background-color: #a0522d;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Tree Container (scrollable area)
+ * ───────────────────────────────────────────────────────────── */
+
+.crafting-tree-container {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-lg);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  /* Touch-friendly scrolling */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  /* Allow pan gestures, don't interfere with pinch-zoom on page */
+  touch-action: pan-x pan-y;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Tree Node Base
+ * ───────────────────────────────────────────────────────────── */
+
+.tree-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tree-node-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-xs) var(--space-sm);
+  text-align: center;
+  box-sizing: border-box;
+  min-width: 80px;
+}
+
+/* Item icon styling */
+.tree-node-icon {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Children Container
+ * ───────────────────────────────────────────────────────────── */
+
+.tree-children {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-end; /* Align children to bottom so connectors meet */
+  gap: var(--tree-horizontal-gap);
+  position: relative;
+  /* Full vertical gap as padding - connectors meet in the middle */
+  padding-bottom: var(--tree-vertical-gap);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Compact Layout - Inline leaves for asymmetric trees
+ * When a leaf is paired with a complex subtree, render the leaf
+ * inline with the parent combine node (not as a distant sibling).
+ * ───────────────────────────────────────────────────────────── */
+
+/* Single child in tree-children (subtree only, leaf is inline) */
+.tree-children--single {
+  justify-content: center;
+}
+
+/* When there's an inline leaf, extend the subtree's vertical line to reach the lower horizontal bar */
+.tree-children--single > .tree-node::before {
+  height: calc(var(--tree-connector-height) + 2px);
+  bottom: calc(-1 * var(--tree-connector-height) - 2px);
+}
+
+/* Content row: wrapper for parent content (and optional inline leaf) */
+.tree-node-content-row {
+  display: contents; /* No extra wrapper when no inline leaf */
+}
+
+/* With inline leaf: side-by-side layout */
+.tree-node-content-row--with-leaf {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--tree-horizontal-gap);
+  position: relative;
+}
+
+/* Inline leaf wrapper */
+.tree-inline-leaf {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Vertical line UP from leaf to bar level */
+.tree-inline-leaf::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  height: calc(var(--tree-connector-height) - 2px);
+  border-left: var(--tree-connector-width) solid var(--tree-connector-color);
+}
+
+/* Horizontal bar from leaf going right */
+.tree-inline-leaf::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + var(--tree-connector-height) + 2px);
+  left: calc(50% - 1px);
+  width: calc(50% + var(--tree-horizontal-gap) / 2 + 1px);
+  border-bottom: var(--tree-connector-width) solid var(--tree-connector-color);
+}
+
+/* Parent content in inline layout */
+.tree-node-content-row--with-leaf > .tree-node-content {
+  position: relative;
+}
+
+/* Vertical line UP from parent to bar level */
+.tree-node-content-row--with-leaf > .tree-node-content::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  height: calc(var(--tree-connector-height) * 2 - 2px);
+  border-left: var(--tree-connector-width) solid var(--tree-connector-color);
+}
+
+/* Horizontal bar from parent going left */
+.tree-node-content-row--with-leaf > .tree-node-content::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + var(--tree-connector-height) + 2px);
+  right: calc(50% - 1px);
+  width: calc(50% + var(--tree-horizontal-gap) / 2 + 1px);
+  border-bottom: var(--tree-connector-width) solid var(--tree-connector-color);
+}
+
+/* Hide connectors on the nested leaf node itself */
+.tree-inline-leaf .tree-node::before,
+.tree-inline-leaf .tree-node::after {
+  display: none;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Connector Lines - Horizontal Bar
+ * The bar connects all children horizontally
+ * ───────────────────────────────────────────────────────────── */
+
+/* Horizontal bar spanning children (via ::after on each child) */
+.tree-children > .tree-node::after {
+  content: '';
+  position: absolute;
+  bottom: calc(-1 * var(--tree-connector-height));
+  height: 0;
+  border-bottom: var(--tree-connector-width) solid var(--tree-connector-color);
+}
+
+/* First child: bar extends from center to right edge */
+.tree-children > .tree-node:first-child:not(:only-child)::after {
+  left: calc(50% - 1px);
+  right: calc(-1 * var(--tree-horizontal-gap) / 2);
+}
+
+/* Last child: bar extends from left edge to center */
+.tree-children > .tree-node:last-child:not(:only-child)::after {
+  left: calc(-1 * var(--tree-horizontal-gap) / 2);
+  right: calc(50% - 1px);
+}
+
+/* Middle children: bar extends full width plus gaps */
+.tree-children > .tree-node:not(:first-child):not(:last-child)::after {
+  left: calc(-1 * var(--tree-horizontal-gap) / 2);
+  right: calc(-1 * var(--tree-horizontal-gap) / 2);
+}
+
+/* Only child: no horizontal bar */
+.tree-children > .tree-node:only-child::after {
+  display: none;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Connector Lines - Vertical from Child to Bar
+ * ───────────────────────────────────────────────────────────── */
+
+.tree-children > .tree-node::before {
+  content: '';
+  position: absolute;
+  bottom: calc(-1 * var(--tree-connector-height));
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: var(--tree-connector-height);
+  border-left: var(--tree-connector-width) solid var(--tree-connector-color);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Connector Lines - Vertical from Bar to Parent
+ * ───────────────────────────────────────────────────────────── */
+
+/* Standard layout: content-row uses display:contents, so target the content directly */
+.tree-node--combine > .tree-node-content-row > .tree-node-content::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * var(--tree-connector-height) - 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: calc(var(--tree-connector-height) - 2px);
+  border-left: var(--tree-connector-width) solid var(--tree-connector-color);
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+ * Leaf Nodes (materials / books) - Minecraft tooltip style
+ * ───────────────────────────────────────────────────────────── */
+
+.tree-node--leaf .tree-node-content {
+  background-color: #100010;
+  border: 2px solid #28007f;
+  border-top-color: #28007f;
+  border-left-color: #28007f;
+  border-right-color: #5000ff;
+  border-bottom-color: #5000ff;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px #010001, 0 0 8px 2px rgba(16, 0, 16, 0.8);
+}
+
+/* Base items (non-books) get gold border accent */
+.tree-node--base .tree-node-content {
+  background-color: #101000;
+  border-color: #7f5000;
+  border-top-color: #7f5000;
+  border-left-color: #7f5000;
+  border-right-color: #ffaa00;
+  border-bottom-color: #ffaa00;
+  box-shadow: 0 0 0 1px #010001, 0 0 8px 2px rgba(16, 16, 0, 0.8);
+}
+
+.tree-node-item {
+  font-size: var(--text-sm);
+  color: var(--mc-yellow); /* Books are yellow */
+  font-weight: 500;
+  font-style: italic;
+  word-wrap: break-word;
+}
+
+/* Subtitle style for items with icons */
+.tree-node-item--subtitle {
+  font-size: 0.6em;
+  font-weight: 400;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+/* Base items (non-books) are aqua like regular items */
+.tree-node--base .tree-node-item {
+  color: var(--mc-aqua);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Combine Nodes (anvil operations) - Minecraft tooltip style
+ * ───────────────────────────────────────────────────────────── */
+
+.tree-node--combine > .tree-node-content-row > .tree-node-content {
+  background-color: #100010;
+  border: 2px solid #28007f;
+  border-top-color: #28007f;
+  border-left-color: #28007f;
+  border-right-color: #5000ff;
+  border-bottom-color: #5000ff;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px #010001, 0 0 8px 2px rgba(16, 0, 16, 0.8);
+}
+
+.tree-node--root > .tree-node-content-row > .tree-node-content {
+  box-shadow: 0 0 0 1px #010001, 0 0 8px 2px rgba(16, 0, 16, 0.8), 0 0 12px rgba(80, 0, 255, 0.4);
+}
+
+.tree-node--completed > .tree-node-content-row > .tree-node-content {
+  background-color: #001000;
+  border-color: #005500;
+  border-top-color: #003300;
+  border-left-color: #003300;
+  border-right-color: #00aa00;
+  border-bottom-color: #00aa00;
+  box-shadow: 0 0 0 1px #010001, 0 0 8px 2px rgba(0, 16, 0, 0.8);
+}
+
+/* Consumed state - items used to craft a completed parent */
+.tree-node--consumed {
+  opacity: 0.4;
+  filter: grayscale(0.5);
+}
+
+.tree-node--consumed .tree-node-content {
+  pointer-events: none;
+}
+
+/* Clickable content for combine nodes */
+.tree-node-content--clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.tree-node-content--clickable:hover {
+  filter: brightness(1.1);
+}
+
+.tree-node-content--clickable:focus-visible {
+  outline: 2px solid var(--mc-gold);
+  outline-offset: 2px;
+}
+
+/* Checkbox positioned top-left */
+.tree-node-checkbox {
+  appearance: none;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 14px;
+  height: 14px;
+  background-color: var(--mc-slot-bg);
+  border: 2px solid var(--mc-panel-border-light);
+  border-top-color: var(--mc-panel-border-dark);
+  border-left-color: var(--mc-panel-border-dark);
+  cursor: pointer;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.tree-node-checkbox:checked {
+  background-color: var(--mc-dark-green);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%2355ff55' d='M10 3L5 8 2 5l1-1 2 2 4-4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.tree-node-cost {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--mc-gold);
+  font-weight: 500;
+}
+
+.tree-node--completed .tree-node-cost {
+  text-decoration: line-through;
+  color: var(--mc-light-gray);
+}
+
+.tree-node-cost-suffix {
+  font-size: var(--text-xs);
+  color: var(--mc-light-gray);
+  margin-left: 2px;
+}
+
+/* Result label - Minecraft tooltip item name style */
+.tree-node-result {
+  font-size: var(--text-sm);
+  color: var(--mc-aqua); /* Items are aqua */
+  font-style: italic;
+}
+
+/* Subtitle style for results with icons */
+.tree-node-result--subtitle {
+  font-size: 0.6em;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+/* Enchanted Book results are yellow */
+.tree-node--book .tree-node-result {
+  color: var(--mc-yellow);
+}
+
+/* Final result keeps aqua */
+.tree-node--root .tree-node-result {
+  font-weight: 500;
+}
+
+.tree-node--completed .tree-node-result {
+  color: var(--mc-green);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Enchantments List (shared) - Minecraft tooltip style
+ * ───────────────────────────────────────────────────────────── */
+
+.tree-node-enchants {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: 1px;
+  margin-top: 4px;
+}
+
+.tree-node-enchant {
+  font-size: var(--text-xs);
+  color: #aaaaaa; /* Minecraft gray text color */
+  white-space: nowrap;
+}
+
+/* Leaf nodes keep purple enchantment text for distinction */
+.tree-node--leaf .tree-node-enchant {
+  color: var(--mc-light-purple);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Empty State
+ * ───────────────────────────────────────────────────────────── */
+
+.crafting-tree-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  text-align: center;
+  color: var(--mc-gray);
+  flex: 1;
+}
+
+.crafting-tree-empty-icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-md);
+  opacity: 0.5;
+}
+
+.crafting-tree-empty-text {
+  font-size: var(--text-sm);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Scaler Wrapper - for dynamic fit-to-width scaling
+ *
+ * The JS component measures the tree's natural width and calculates
+ * a scale factor to fit the container. This adapts to any tree size.
+ * ───────────────────────────────────────────────────────────── */
+
+.crafting-tree-scaler {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  /* Prevent scaler from constraining tree width */
+  width: max-content;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Responsive - Touch devices with dynamic scaling
+ * ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  /* Ensure tree fills modal body */
+  .crafting-tree {
+    height: 100%;
+    min-height: 0;
+    flex: 1;
+  }
+
+  .crafting-tree-container {
+    padding: var(--space-sm);
+    /* Enable scrolling if still needed */
+    overflow-x: auto;
+    overflow-y: auto;
+    /* Center the scaled content */
+    justify-content: center;
+    align-items: flex-start;
+    /* Smooth momentum scrolling on touch devices */
+    -webkit-overflow-scrolling: touch;
+    /* Fill available space */
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Touch feedback */
+  .tree-node-content {
+    transition: background-color 0.1s ease-out;
+  }
+
+  .tree-node-content:active {
+    opacity: 0.8;
+  }
+
+  /* Ensure children don't wrap or shrink */
+  .tree-children {
+    flex-wrap: nowrap;
+  }
+
+  /* Larger checkboxes on mobile */
+  .tree-node-checkbox {
+    width: 18px;
+    height: 18px;
+  }
+
+  .tree-node-checkbox:checked {
+    background-size: 12px 12px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Small phones - slightly larger tap targets
+ * ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .crafting-tree-container {
+    padding: var(--space-xs);
+  }
+
+  .tree-node-checkbox {
+    width: 20px;
+    height: 20px;
+  }
+
+  .tree-node-checkbox:checked {
+    background-size: 14px 14px;
+  }
+}

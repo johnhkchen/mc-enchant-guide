@@ -1,0 +1,428 @@
+---
+/**
+ * BundleCard Component
+ *
+ * Displays a bundle card with minimalistic item icons grid.
+ * Hover over items to see tooltip with full details.
+ */
+
+import type { BundleData } from '../../data/bundle-lookup.js';
+
+interface ResolvedRecipe {
+  id: string;
+  name: string;
+  totalLevels: number;
+  baseItem: string;
+  enchantments: string[];
+}
+
+interface Props {
+  /** Bundle data from lookup */
+  bundle: BundleData;
+  /** Pre-resolved recipes for display and cart actions */
+  resolvedRecipes: ResolvedRecipe[];
+  /** Data attribute: bundle name for filtering */
+  'data-name'?: string;
+  /** Data attribute: bundle tags for filtering */
+  'data-tags'?: string;
+  /** Data attribute: bundle cost for sorting */
+  'data-cost'?: number;
+}
+
+const { bundle, resolvedRecipes, ...dataAttrs } = Astro.props;
+
+/**
+ * Convert baseItem string to icon filename.
+ */
+function getIconPath(baseItem: string): string {
+  let normalized = baseItem;
+  if (normalized.startsWith('gold_')) {
+    normalized = 'golden_' + normalized.slice(5);
+  }
+  return `/items/minecraft_${normalized}.png`;
+}
+
+/**
+ * Get display name from baseItem string.
+ */
+function getDisplayName(baseItem: string): string {
+  return baseItem
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+---
+
+<article class="bundle-card" data-bundle-id={bundle.id} data-bundle-detail-trigger={bundle.id} {...dataAttrs}>
+  <!-- Bundle header -->
+  <header class="bundle-card-header">
+    <button
+      type="button"
+      class="bundle-card-title-btn"
+      data-bundle-title-trigger={bundle.id}
+      aria-label={`View ${bundle.name} details`}
+    >
+      <h3 class="bundle-card-title">{bundle.name}</h3>
+    </button>
+    <span class="bundle-card-stats">
+      <span class="bundle-card-cost">{bundle.totalLevelCost}<span class="bundle-card-cost-suffix">lvl</span></span>
+    </span>
+  </header>
+
+  <!-- Item icons grid with hover tooltips -->
+  <div class="bundle-items-grid">
+    {resolvedRecipes.map((recipe) => (
+      <div class="bundle-item-wrapper">
+        <img
+          src={getIconPath(recipe.baseItem)}
+          alt={recipe.name}
+          class="bundle-item-icon"
+          data-recipe-id={recipe.id}
+        />
+        <!-- Tooltip on hover (desktop only, hidden on mobile via CSS) -->
+        <div class="bundle-item-tooltip">
+          <span class="bundle-item-tooltip-cost">
+            {recipe.totalLevels}
+            <span class="bundle-item-tooltip-cost-suffix">lvl</span>
+          </span>
+          <img src={getIconPath(recipe.baseItem)} alt="" class="bundle-item-tooltip-icon" />
+          <span class="bundle-item-tooltip-name">{getDisplayName(recipe.baseItem)}</span>
+          <div class="bundle-item-tooltip-enchants">
+            {recipe.enchantments.map((ench) => (
+              <span class="bundle-item-tooltip-enchant">{ench}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <!-- Action button -->
+  <footer class="bundle-card-footer">
+    <button
+      type="button"
+      class="btn btn-primary btn-sm add-all-btn"
+      data-bundle-id={bundle.id}
+      data-recipes={JSON.stringify(resolvedRecipes.map(r => ({ id: r.id, name: r.name, totalLevels: r.totalLevels })))}
+      aria-label={`Add all ${bundle.itemCount} items from ${bundle.name} to shopping list`}
+    >
+      Add All to List
+    </button>
+  </footer>
+</article>
+
+<style>
+  /* Bundle card container */
+  .bundle-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    min-width: 200px;
+    max-width: 280px;
+  }
+
+  /* Header with title and stats */
+  .bundle-card-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm);
+  }
+
+  .bundle-card-title-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .bundle-card-title-btn:hover .bundle-card-title {
+    color: var(--mc-white);
+    text-decoration: underline;
+  }
+
+  .bundle-card-title-btn:focus-visible {
+    outline: 2px solid var(--mc-gold);
+    outline-offset: 2px;
+  }
+
+  .bundle-card-title {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    color: var(--mc-green);
+    text-shadow: 1px 1px 0 var(--mc-black);
+    margin: 0;
+    transition: color var(--transition-fast);
+  }
+
+  .bundle-card-stats {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-xs);
+  }
+
+  .bundle-card-cost {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--mc-gold);
+    font-weight: 500;
+  }
+
+  .bundle-card-cost-suffix {
+    font-size: var(--text-xs);
+    color: var(--mc-light-gray);
+    margin-left: 2px;
+  }
+
+  /* Items grid with icons */
+  .bundle-items-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: var(--space-xs);
+    background-color: #100010;
+    border: 2px solid #005500;
+    border-top-color: #003300;
+    border-left-color: #003300;
+    border-right-color: #00aa00;
+    border-bottom-color: #00aa00;
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px #010001, 0 0 8px 2px rgba(16, 0, 16, 0.8);
+  }
+
+  /* Item wrapper for tooltip positioning */
+  .bundle-item-wrapper {
+    position: relative;
+  }
+
+  .bundle-item-icon {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+  }
+
+  .bundle-item-icon:hover {
+    transform: scale(1.1);
+  }
+
+  /* Tooltip - hidden by default */
+  .bundle-item-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: var(--z-tooltip);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: var(--space-sm);
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+
+    /* Minecraft tooltip colors */
+    background-color: #100010;
+    border: 2px solid #28007f;
+    border-top-color: #28007f;
+    border-left-color: #28007f;
+    border-right-color: #5000ff;
+    border-bottom-color: #5000ff;
+
+    /* Minecraft tooltip styling */
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px #010001, 0 0 8px 2px rgba(16, 0, 16, 0.8);
+  }
+
+  .bundle-item-wrapper:hover .bundle-item-tooltip {
+    display: flex;
+  }
+
+  /* Tooltip content */
+  .bundle-item-tooltip-cost {
+    position: absolute;
+    top: var(--space-xs);
+    right: var(--space-xs);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--mc-gold);
+    font-weight: 500;
+  }
+
+  .bundle-item-tooltip-cost-suffix {
+    font-size: 0.8em;
+    color: var(--mc-light-gray);
+    margin-left: 1px;
+  }
+
+  .bundle-item-tooltip-icon {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  .bundle-item-tooltip-name {
+    font-size: 0.7em;
+    color: var(--mc-aqua);
+    font-style: italic;
+    opacity: 0.8;
+  }
+
+  .bundle-item-tooltip-enchants {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    align-self: stretch;
+    gap: 1px;
+    margin-top: 4px;
+  }
+
+  .bundle-item-tooltip-enchant {
+    font-size: var(--text-xs);
+    color: var(--mc-light-purple);
+  }
+
+  /* Footer with action button */
+  .bundle-card-footer {
+    display: flex;
+  }
+
+  .bundle-card-footer .btn {
+    flex: 1;
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-xs);
+  }
+
+  @media (max-width: 640px) {
+    .bundle-card {
+      min-width: auto;
+      max-width: none;
+      cursor: pointer;
+    }
+
+    .bundle-card:active {
+      opacity: 0.9;
+    }
+
+    .bundle-item-icon {
+      width: 28px;
+      height: 28px;
+    }
+
+    /* Hide tooltips on mobile - use modal instead */
+    .bundle-item-tooltip {
+      display: none !important;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Client-side script for BundleCard interactions.
+   * Handles Add All button click and mobile bundle detail trigger.
+   */
+
+  // Wait for DOM to be ready
+  document.addEventListener('DOMContentLoaded', initBundleCardButtons);
+  // Also run immediately in case DOM is already loaded
+  if (document.readyState !== 'loading') {
+    initBundleCardButtons();
+  }
+
+  interface RecipeInput {
+    id: string;
+    name: string;
+    totalLevels: number;
+  }
+
+  // Check if mobile viewport
+  function isMobile(): boolean {
+    return window.innerWidth <= 640;
+  }
+
+  function initBundleCardButtons(): void {
+    // Bundle title buttons - open modal on any viewport
+    document.querySelectorAll('[data-bundle-title-trigger]').forEach((btn) => {
+      if (btn.hasAttribute('data-title-initialized')) return;
+      btn.setAttribute('data-title-initialized', 'true');
+
+      btn.addEventListener('click', (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const bundleId = (btn as HTMLElement).dataset.bundleTitleTrigger;
+
+        if (bundleId) {
+          window.dispatchEvent(new CustomEvent('bundle-detail', {
+            detail: { bundleId },
+          }));
+        }
+      });
+    });
+
+    // Bundle card tap - open modal on mobile when tapping anywhere on the card
+    document.querySelectorAll('[data-bundle-detail-trigger]').forEach((card) => {
+      if (card.hasAttribute('data-detail-initialized')) return;
+      card.setAttribute('data-detail-initialized', 'true');
+
+      card.addEventListener('click', (e: Event) => {
+        // Only trigger on mobile
+        if (!isMobile()) return;
+
+        // Don't trigger if clicking on a button (title or add-all)
+        const target = e.target as HTMLElement;
+        if (target.closest('button')) return;
+
+        e.preventDefault();
+        const bundleId = (card as HTMLElement).dataset.bundleDetailTrigger;
+
+        if (bundleId) {
+          window.dispatchEvent(new CustomEvent('bundle-detail', {
+            detail: { bundleId },
+          }));
+        }
+      });
+    });
+
+    // Add All buttons - add all bundle recipes to cart
+    document.querySelectorAll('.add-all-btn').forEach((btn) => {
+      if (btn.hasAttribute('data-initialized')) return;
+      btn.setAttribute('data-initialized', 'true');
+
+      btn.addEventListener('click', async (e) => {
+        const target = e.currentTarget as HTMLButtonElement;
+        const recipesJson = target.dataset.recipes;
+
+        if (!recipesJson) return;
+
+        try {
+          const recipes: RecipeInput[] = JSON.parse(recipesJson);
+
+          // Dynamic import to avoid bundling cart store in initial load
+          const { addBundle } = await import('../../stores/cart.js');
+
+          addBundle(recipes);
+
+          // Dispatch event to update cart badge
+          window.dispatchEvent(new Event('cart-updated'));
+
+          // Visual feedback - brief button state change
+          const originalText = target.textContent;
+          target.textContent = 'Added!';
+          target.disabled = true;
+
+          setTimeout(() => {
+            target.textContent = originalText;
+            target.disabled = false;
+          }, 1000);
+        } catch (err) {
+          console.error('Failed to add bundle to cart:', err);
+        }
+      });
+    });
+  }
+</script>

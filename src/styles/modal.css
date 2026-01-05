@@ -1,0 +1,741 @@
+/**
+ * Modal Styles
+ *
+ * Minecraft-themed modal overlay and dialog styles.
+ * Used for Quick Craft modal and other dialogs.
+ */
+
+/* ─────────────────────────────────────────────────────────────
+ * Modal Backdrop
+ * ───────────────────────────────────────────────────────────── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-backdrop);
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  animation: modal-fade-in 150ms ease-out;
+}
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Modal Container
+ * ───────────────────────────────────────────────────────────── */
+
+.modal {
+  position: fixed;
+  z-index: var(--z-modal);
+  width: 900px;
+  height: 650px;
+  min-width: 500px;
+  min-height: 400px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--mc-panel-bg);
+  border: 2px solid var(--mc-panel-border-dark);
+  border-top-color: var(--mc-panel-border-light);
+  border-left-color: var(--mc-panel-border-light);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  animation: modal-slide-in 150ms ease-out;
+  /* Use transform for positioning (set via JS) */
+  will-change: transform, width, height;
+}
+
+/* Dragging state - disable animations and text selection */
+.modal--dragging {
+  animation: none;
+  user-select: none;
+  cursor: grabbing;
+}
+
+/* Resizing state */
+.modal--resizing {
+  animation: none;
+  user-select: none;
+}
+
+@keyframes modal-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Modal Header
+ * ───────────────────────────────────────────────────────────── */
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--mc-dark-gray);
+  border-bottom: 2px solid var(--mc-panel-border-dark);
+  cursor: grab;
+  user-select: none;
+}
+
+.modal--dragging .modal-header {
+  cursor: grabbing;
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--mc-white);
+  text-shadow: 2px 2px 0 var(--mc-black);
+  margin: 0;
+}
+
+.modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background-color: var(--mc-gray);
+  border: 2px solid var(--mc-panel-border-dark);
+  border-top-color: var(--mc-panel-border-light);
+  border-left-color: var(--mc-panel-border-light);
+  color: var(--mc-white);
+  font-size: var(--text-lg);
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.modal-close:hover {
+  background-color: var(--mc-dark-red);
+}
+
+.modal-close:focus-visible {
+  outline: 2px solid var(--mc-gold);
+  outline-offset: 2px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Modal Tabs
+ * ───────────────────────────────────────────────────────────── */
+
+.modal-tabs {
+  display: flex;
+  background-color: var(--mc-slot-bg);
+  border-bottom: 2px solid var(--mc-panel-border-dark);
+}
+
+.modal-tab {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--mc-light-gray);
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.modal-tab:hover:not(.modal-tab--active) {
+  background-color: var(--mc-gray);
+  color: var(--mc-white);
+}
+
+.modal-tab--active {
+  background-color: var(--mc-panel-bg);
+  color: var(--mc-white);
+}
+
+.modal-tab--active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--mc-panel-bg);
+}
+
+.modal-tab:focus-visible {
+  outline: 2px solid var(--mc-gold);
+  outline-offset: -2px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Modal Body
+ * ───────────────────────────────────────────────────────────── */
+
+.modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+  min-height: 0; /* Allow flex child to shrink */
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Modal Footer
+ * ───────────────────────────────────────────────────────────── */
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--mc-dark-gray);
+  border-top: 2px solid var(--mc-panel-border-dark);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Tab Panels
+ * ───────────────────────────────────────────────────────────── */
+
+.modal-tab-panel {
+  display: none;
+}
+
+.modal-tab-panel--active {
+  display: block;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Pick List Tab
+ * ───────────────────────────────────────────────────────────── */
+
+.pick-list {
+  padding: var(--space-md);
+}
+
+.pick-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--mc-gray);
+}
+
+.pick-list-title {
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+}
+
+.pick-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.pick-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--mc-slot-bg);
+  border: 2px solid var(--mc-panel-border-light);
+  border-top-color: var(--mc-panel-border-dark);
+  border-left-color: var(--mc-panel-border-dark);
+}
+
+.pick-list-item--base {
+  border-color: var(--mc-gold);
+  border-top-color: var(--mc-yellow);
+  border-left-color: var(--mc-yellow);
+}
+
+.pick-list-item--checked {
+  opacity: 0.6;
+  background-color: var(--mc-dark-green);
+}
+
+.pick-list-checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background-color: var(--mc-dark-gray);
+  border: 2px solid var(--mc-panel-border-light);
+  border-top-color: var(--mc-panel-border-dark);
+  border-left-color: var(--mc-panel-border-dark);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.pick-list-checkbox:checked {
+  background-color: var(--mc-dark-green);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2355ff55' d='M10 3L5 8 2 5l1-1 2 2 4-4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.pick-list-checkbox:focus-visible {
+  outline: 2px solid var(--mc-gold);
+  outline-offset: 2px;
+}
+
+.pick-list-item-name {
+  flex: 1;
+  font-size: var(--text-sm);
+  color: var(--mc-aqua);
+}
+
+.pick-list-item--base .pick-list-item-name {
+  color: var(--mc-gold);
+}
+
+.pick-list-item--checked .pick-list-item-name {
+  text-decoration: line-through;
+  color: var(--mc-green);
+}
+
+.pick-list-item-qty {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--mc-light-gray);
+  min-width: 30px;
+  text-align: right;
+}
+
+/* Copy button */
+.pick-list-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-xs);
+  color: var(--mc-light-gray);
+  background-color: var(--mc-gray);
+  border: 2px solid var(--mc-panel-border-dark);
+  border-top-color: var(--mc-panel-border-light);
+  border-left-color: var(--mc-panel-border-light);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pick-list-copy:hover {
+  background-color: var(--mc-light-gray);
+  color: var(--mc-black);
+}
+
+.pick-list-copy:focus-visible {
+  outline: 2px solid var(--mc-gold);
+  outline-offset: 2px;
+}
+
+.pick-list-copy--copied {
+  background-color: var(--mc-dark-green);
+  color: var(--mc-green);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Resize Handles
+ * ───────────────────────────────────────────────────────────── */
+
+/* Base resize handle styles */
+.modal-resize-handle {
+  position: absolute;
+  background: transparent;
+  z-index: 10;
+}
+
+/* Edge handles */
+.modal-resize-handle--n {
+  top: -4px;
+  left: 8px;
+  right: 8px;
+  height: 8px;
+  cursor: n-resize;
+}
+
+.modal-resize-handle--s {
+  bottom: -4px;
+  left: 8px;
+  right: 8px;
+  height: 8px;
+  cursor: s-resize;
+}
+
+.modal-resize-handle--e {
+  top: 8px;
+  bottom: 8px;
+  right: -4px;
+  width: 8px;
+  cursor: e-resize;
+}
+
+.modal-resize-handle--w {
+  top: 8px;
+  bottom: 8px;
+  left: -4px;
+  width: 8px;
+  cursor: w-resize;
+}
+
+/* Corner handles */
+.modal-resize-handle--nw {
+  top: -4px;
+  left: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: nw-resize;
+}
+
+.modal-resize-handle--ne {
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: ne-resize;
+}
+
+.modal-resize-handle--sw {
+  bottom: -4px;
+  left: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: sw-resize;
+}
+
+.modal-resize-handle--se {
+  bottom: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: se-resize;
+}
+
+/* Visual indicator on hover */
+.modal-resize-handle:hover {
+  background: rgba(255, 170, 0, 0.3);
+}
+
+.modal-resize-handle--se::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--mc-gray);
+  border-bottom: 2px solid var(--mc-gray);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.modal:hover .modal-resize-handle--se::after {
+  opacity: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Responsive
+ * ───────────────────────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────────────────────
+ * Bundle Detail Modal (Simple popover for mobile)
+ * ───────────────────────────────────────────────────────────── */
+
+.bundle-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-backdrop);
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  animation: modal-fade-in 150ms ease-out;
+}
+
+.bundle-modal {
+  position: relative;
+  z-index: var(--z-modal);
+  width: 100%;
+  max-width: 400px;
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  background-color: #100010;
+  border: 2px solid #005500;
+  border-top-color: #003300;
+  border-left-color: #003300;
+  border-right-color: #00aa00;
+  border-bottom-color: #00aa00;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px #010001, 0 0 12px 4px rgba(0, 50, 0, 0.6), 0 8px 32px rgba(0, 0, 0, 0.5);
+  animation: modal-slide-in 150ms ease-out;
+}
+
+.bundle-modal-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background-color: rgba(0, 50, 0, 0.5);
+  border-bottom: 2px solid #005500;
+}
+
+.bundle-modal-title {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  color: var(--mc-green);
+  text-shadow: 1px 1px 0 var(--mc-black);
+  margin: 0;
+}
+
+.bundle-modal-cost {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--mc-gold);
+  font-weight: 500;
+}
+
+.bundle-modal-cost-suffix {
+  font-size: var(--text-xs);
+  color: var(--mc-light-gray);
+  margin-left: 4px;
+}
+
+.bundle-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  color: var(--mc-light-gray);
+  font-size: var(--text-xl);
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.bundle-modal-close:hover {
+  color: var(--mc-red);
+}
+
+.bundle-modal-close:focus-visible {
+  outline: 2px solid var(--mc-gold);
+  outline-offset: 2px;
+}
+
+.bundle-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+}
+
+.bundle-modal-description {
+  font-size: var(--text-sm);
+  color: var(--mc-light-gray);
+  line-height: var(--leading-relaxed);
+  margin: 0 0 var(--space-md) 0;
+}
+
+.bundle-modal-items {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm);
+}
+
+.bundle-modal-item {
+  /* Each item fills its grid cell */
+  display: flex;
+}
+
+.bundle-modal-item-tooltip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-sm);
+  text-align: center;
+  flex: 1;
+  background-color: #100010;
+  border: 2px solid #28007f;
+  border-top-color: #28007f;
+  border-left-color: #28007f;
+  border-right-color: #5000ff;
+  border-bottom-color: #5000ff;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px #010001, 0 0 8px 2px rgba(16, 0, 16, 0.8);
+}
+
+.bundle-modal-item-cost {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--mc-gold);
+  font-weight: 500;
+}
+
+.bundle-modal-item-cost-suffix {
+  font-size: 0.8em;
+  color: var(--mc-light-gray);
+  margin-left: 1px;
+}
+
+.bundle-modal-item-icon {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.bundle-modal-item-name {
+  font-size: 0.7em;
+  color: var(--mc-aqua);
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.bundle-modal-item-enchants {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: 1px;
+  margin-top: 4px;
+}
+
+.bundle-modal-item-enchant {
+  font-size: var(--text-xs);
+  color: var(--mc-light-purple);
+}
+
+.bundle-modal-footer {
+  padding: var(--space-sm) var(--space-md);
+  border-top: 2px solid #005500;
+  background-color: rgba(0, 50, 0, 0.3);
+}
+
+.bundle-modal-add {
+  width: 100%;
+}
+
+.bundle-modal-add--added {
+  background-color: var(--mc-dark-green);
+  color: var(--mc-green);
+}
+
+@media (max-width: 640px) {
+  .bundle-modal-backdrop {
+    padding: var(--space-sm);
+  }
+
+  .bundle-modal {
+    max-height: calc(100vh - 32px);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Quick Craft Modal - Responsive
+ * ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  /* Reset backdrop to simple fullscreen container */
+  .modal-backdrop {
+    padding: 0;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  /* COMPLETE RESET: Override ALL base modal styles for fullscreen */
+  .modal {
+    /* Position: fill viewport completely */
+    position: fixed;
+    inset: 0;
+    /* Size: reset all constraints */
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    max-width: none;
+    max-height: none;
+    /* Override any JS inline styles */
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    transform: none !important;
+    /* Layout */
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    border-radius: 0;
+    border: none;
+    /* Safe area for notched phones */
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0) 0;
+    box-sizing: border-box;
+  }
+
+  .modal-header {
+    padding: var(--space-sm);
+    cursor: default;
+    background-color: var(--mc-dark-gray);
+    border-bottom: 2px solid var(--mc-panel-border-dark);
+  }
+
+  .modal-title {
+    font-size: var(--text-base);
+  }
+
+  /* Larger close button for mobile */
+  .modal-close {
+    width: 40px;
+    height: 40px;
+    font-size: var(--text-xl);
+  }
+
+  .modal-tabs {
+    flex-shrink: 0;
+  }
+
+  .modal-body {
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .modal-tab-panel--active {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pick-list {
+    padding: var(--space-sm);
+    overflow: auto;
+    flex: 1;
+  }
+
+  /* Hide resize handles on mobile */
+  .modal-resize-handle {
+    display: none;
+  }
+}

@@ -1,0 +1,361 @@
+---
+/**
+ * Catalog Page (index.astro)
+ *
+ * Main entry point displaying all recipes and bundles with
+ * search, filtering, and sorting capabilities.
+ *
+ * All recipe optimization is computed at build time.
+ */
+
+import Layout from '../components/astro/Layout.astro';
+import RecipeCard from '../components/astro/RecipeCard.astro';
+import BundleCard from '../components/astro/BundleCard.astro';
+import { CatalogFilters } from '../components/solid/CatalogFilters.tsx';
+import { QuickCraftModal, type RecipeModalData } from '../components/solid/QuickCraftModal.tsx';
+import { BundleDetailModal, type BundleModalData } from '../components/solid/BundleDetailModal.tsx';
+import { getAllRecipes, getRecipe, type RecipeData } from '../data/recipe-lookup.js';
+import { getAllBundles, type BundleData } from '../data/bundle-lookup.js';
+import { generateBOM } from '../engine/bom.js';
+import { formatEnchantments } from '../utils/format.js';
+
+// Load all data at build time
+const allRecipes = getAllRecipes();
+const allBundles = getAllBundles();
+
+// Sort recipes by XP cost high to low (default sort)
+const sortedRecipes = [...allRecipes].sort((a, b) => b.totalLevelCost - a.totalLevelCost);
+
+// Sort bundles by total cost high to low
+const sortedBundles = [...allBundles].sort((a, b) => b.totalLevelCost - a.totalLevelCost);
+
+// Resolve bundle recipes for BundleCard
+interface ResolvedRecipe {
+  id: string;
+  name: string;
+  totalLevels: number;
+  baseItem: string;
+  enchantments: string[];
+}
+
+interface ResolvedBundle {
+  bundle: BundleData;
+  resolvedRecipes: ResolvedRecipe[];
+}
+
+const bundlesWithRecipes: ResolvedBundle[] = sortedBundles.map((bundle) => {
+  const resolvedRecipes = bundle.recipeIds
+    .map((id) => {
+      const recipe = getRecipe(id);
+      if (!recipe) return null;
+      return {
+        id: recipe.id,
+        name: recipe.name,
+        totalLevels: recipe.totalLevelCost,
+        baseItem: recipe.baseItem,
+        enchantments: formatEnchantments(recipe.enchantments),
+      };
+    })
+    .filter((r): r is ResolvedRecipe => r !== null);
+
+  return { bundle, resolvedRecipes };
+});
+
+// Count totals for display
+const totalRecipes = allRecipes.length;
+const totalBundles = allBundles.length;
+
+// Pre-compute recipe data for Quick Craft modal (tree + BOM)
+const recipesForModal: Record<string, RecipeModalData> = {};
+for (const recipe of allRecipes) {
+  recipesForModal[recipe.id] = {
+    id: recipe.id,
+    name: recipe.name,
+    tree: recipe.tree,
+    bom: generateBOM(recipe.tree),
+  };
+}
+
+// Pre-compute bundle data for Bundle Detail modal
+const bundlesForModal: Record<string, BundleModalData> = {};
+for (const { bundle, resolvedRecipes } of bundlesWithRecipes) {
+  bundlesForModal[bundle.id] = {
+    id: bundle.id,
+    name: bundle.name,
+    description: bundle.description,
+    totalLevelCost: bundle.totalLevelCost,
+    recipes: resolvedRecipes,
+  };
+}
+---
+
+<Layout title="Catalog">
+  <!-- Skip link for accessibility -->
+  <a href="#catalog-content" class="skip-link">Skip to catalog</a>
+
+  <!-- Hero section -->
+  <section class="hero">
+    <h1>Minecraft Enchant Guide</h1>
+    <p class="hero-subtitle">Optimized enchantment recipes for crafting at scale.</p>
+    <p class="hero-stats">
+      <span class="stat">{totalRecipes} recipes</span>
+      <span class="stat-divider" aria-hidden="true">|</span>
+      <span class="stat">{totalBundles} bundles</span>
+    </p>
+  </section>
+
+  <!-- Filter controls (Solid.js island) -->
+  <section class="filters-section" aria-label="Catalog filters">
+    <CatalogFilters client:load />
+  </section>
+
+  <!-- Main catalog content -->
+  <div id="catalog-content" class="catalog-content">
+    <!-- Bundles section -->
+    {bundlesWithRecipes.length > 0 && (
+      <section id="bundles-section" class="catalog-section" aria-labelledby="bundles-heading">
+        <h2 id="bundles-heading" class="section-heading">Bundles</h2>
+        <div id="bundles-grid" class="card-grid">
+          {bundlesWithRecipes.map(({ bundle, resolvedRecipes }) => (
+            <BundleCard
+              bundle={bundle}
+              resolvedRecipes={resolvedRecipes}
+              data-name={bundle.name}
+              data-tags={bundle.tags.join(' ')}
+              data-cost={bundle.totalLevelCost}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Recipes section -->
+    {sortedRecipes.length > 0 && (
+      <section id="recipes-section" class="catalog-section" aria-labelledby="recipes-heading">
+        <h2 id="recipes-heading" class="section-heading">Recipes</h2>
+        <div id="recipes-grid" class="card-grid">
+          {sortedRecipes.map((recipe) => (
+            <RecipeCard
+              recipe={recipe}
+              data-name={recipe.name}
+              data-tags={recipe.tags.join(' ')}
+              data-category={recipe.category}
+              data-cost={recipe.totalLevelCost}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Empty state -->
+    <div id="catalog-empty" class="empty-state" style="display: none;">
+      <span class="empty-state-icon" aria-hidden="true">&#128269;</span>
+      <h3 class="empty-state-title">No results found</h3>
+      <p class="empty-state-description">
+        Try adjusting your search or filters to find what you're looking for.
+      </p>
+    </div>
+  </div>
+
+  <!-- Quick Craft Modal (Solid.js island) -->
+  <QuickCraftModal client:load recipes={recipesForModal} />
+
+  <!-- Bundle Detail Modal (Solid.js island) -->
+  <BundleDetailModal client:load bundles={bundlesForModal} />
+</Layout>
+
+<style>
+  /* ─────────────────────────────────────────────────────────────
+   * Skip Link (Accessibility)
+   * ───────────────────────────────────────────────────────────── */
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: var(--space-sm);
+    z-index: 1000;
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--mc-gold);
+    color: var(--mc-black);
+    font-weight: bold;
+    text-decoration: none;
+
+    &:focus {
+      left: var(--space-sm);
+    }
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * Hero Section
+   * ───────────────────────────────────────────────────────────── */
+
+  .hero {
+    text-align: center;
+    padding-block: var(--space-xl);
+    margin-bottom: var(--space-lg);
+  }
+
+  .hero h1 {
+    margin-bottom: var(--space-sm);
+  }
+
+  .hero-subtitle {
+    font-size: var(--text-lg);
+    color: var(--mc-light-gray);
+    margin-bottom: var(--space-md);
+  }
+
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--text-sm);
+    color: var(--mc-gray);
+  }
+
+  .stat {
+    font-family: var(--font-mono);
+    color: var(--mc-gold);
+  }
+
+  .stat-divider {
+    color: var(--mc-dark-gray);
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * Filter Section
+   * ───────────────────────────────────────────────────────────── */
+
+  .filters-section {
+    margin-bottom: var(--space-lg);
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * Catalog Content
+   * ───────────────────────────────────────────────────────────── */
+
+  .catalog-content {
+    min-height: 300px;
+  }
+
+  .catalog-section {
+    margin-bottom: var(--space-xl);
+  }
+
+  .section-heading {
+    font-size: var(--text-xl);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid var(--mc-gray);
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * Card Grid
+   * ───────────────────────────────────────────────────────────── */
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 280px));
+    gap: var(--space-md);
+    justify-content: center;
+  }
+
+  @media (max-width: 640px) {
+    .card-grid {
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      justify-content: stretch;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .card-grid {
+      grid-template-columns: repeat(auto-fill, minmax(220px, 280px));
+    }
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+   * Empty State
+   * ───────────────────────────────────────────────────────────── */
+
+  .empty-state {
+    padding: var(--space-2xl);
+    text-align: center;
+    background-color: var(--mc-dark-gray);
+    border: 2px solid var(--mc-black);
+    border-top-color: var(--mc-gray);
+    border-left-color: var(--mc-gray);
+  }
+</style>
+
+<style is:global>
+  /* ─────────────────────────────────────────────────────────────
+   * CatalogFilters Styles (Solid component)
+   * ───────────────────────────────────────────────────────────── */
+
+  .catalog-filters {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .filter-row {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+  }
+
+  .filter-search {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .filter-sort {
+    flex-shrink: 0;
+  }
+
+  .category-tabs {
+    flex-wrap: wrap;
+  }
+
+  /* CartBadge Solid component */
+  .cart-badge-solid {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    font-size: 11px;
+    font-weight: bold;
+    line-height: 1;
+    color: var(--mc-white);
+    background-color: var(--mc-red);
+    border-radius: 9px;
+  }
+
+  @media (max-width: 640px) {
+    .filter-row {
+      flex-direction: column;
+    }
+
+    .filter-search,
+    .filter-sort {
+      width: 100%;
+    }
+
+    .filter-sort .select {
+      width: 100%;
+    }
+
+    .category-tabs {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      flex-wrap: nowrap;
+    }
+
+    .category-tabs .tab {
+      flex-shrink: 0;
+    }
+  }
+</style>

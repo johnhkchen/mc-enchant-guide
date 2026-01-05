@@ -1,0 +1,103 @@
+# src/data/rules/patches.yaml
+# Rules/patches for edge cases in Minecraft enchanting mechanics
+# See specification.md for rule type definitions
+
+version: "1.0"
+minecraft_version: "1.21"
+edition: "java"
+
+rules:
+  # ─────────────────────────────────────────────────────────────
+  # Conditional Conflicts
+  # Enchantments that only conflict on specific item types
+  # ─────────────────────────────────────────────────────────────
+
+  - id: mending-infinity-bow
+    type: conditional_conflict
+    description: Mending and Infinity conflict only on bows
+    enchantments: [mending, infinity]
+    condition:
+      item_types: [bow]
+
+  - id: riptide-loyalty-trident
+    type: conditional_conflict
+    description: Riptide and Loyalty conflict only on tridents
+    enchantments: [riptide, loyalty]
+    condition:
+      item_types: [trident]
+
+  - id: riptide-channeling-trident
+    type: conditional_conflict
+    description: Riptide and Channeling conflict only on tridents
+    enchantments: [riptide, channeling]
+    condition:
+      item_types: [trident]
+
+  - id: multishot-piercing-crossbow
+    type: conditional_conflict
+    description: Multishot and Piercing conflict on crossbows
+    enchantments: [multishot, piercing]
+    condition:
+      item_types: [crossbow]
+
+  - id: depth-strider-frost-walker-boots
+    type: conditional_conflict
+    description: Depth Strider and Frost Walker conflict on boots
+    enchantments: [depth_strider, frost_walker]
+    condition:
+      item_types: [boots]
+
+  - id: silk-touch-fortune-tools
+    type: conditional_conflict
+    description: Silk Touch and Fortune conflict on tools
+    enchantments: [silk_touch, fortune]
+    condition:
+      item_types: [pickaxe, axe, shovel, hoe]
+
+  # ─────────────────────────────────────────────────────────────
+  # Max Level Overrides
+  # Enchantments with specific max level caps
+  # ─────────────────────────────────────────────────────────────
+
+  - id: soul-speed-max
+    type: max_level_override
+    description: Soul Speed has a maximum level of 3
+    enchantment: soul_speed
+    max_level: 3
+
+  - id: swift-sneak-max
+    type: max_level_override
+    description: Swift Sneak has a maximum level of 3
+    enchantment: swift_sneak
+    max_level: 3
+
+  # ─────────────────────────────────────────────────────────────
+  # Cost Modifiers
+  # Enchantments with adjusted anvil costs (treasure enchants)
+  # ─────────────────────────────────────────────────────────────
+
+  - id: treasure-enchant-cost
+    type: cost_modifier
+    description: Treasure enchantments have higher book multipliers
+    enchantments: [mending, frost_walker, soul_speed, swift_sneak]
+    modifier:
+      book_multiplier_add: 0
+
+  # ─────────────────────────────────────────────────────────────
+  # Item Restrictions
+  # Enchantments with specific item type restrictions
+  # ─────────────────────────────────────────────────────────────
+
+  - id: curse-binding-wearables
+    type: item_restriction
+    description: Curse of Binding only applies to wearable items
+    enchantment: curse_of_binding
+    allowed_items: [helmet, chestplate, leggings, boots, elytra]
+
+  - id: sweeping-edge-java-only
+    type: item_restriction
+    description: Sweeping Edge is Java Edition only
+    enchantment: sweeping_edge
+    allowed_items: [sword]
+    condition:
+      edition: java
