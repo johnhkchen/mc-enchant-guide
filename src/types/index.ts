@@ -84,7 +84,8 @@ export interface BaseItem {
 export type RecipeCategory =
   | 'swords' | 'pickaxes' | 'axes' | 'shovels' | 'hoes'
   | 'helmets' | 'chestplates' | 'leggings' | 'boots'
-  | 'bows' | 'crossbows' | 'tridents' | 'maces' | 'fishing_rods';
+  | 'bows' | 'crossbows' | 'tridents' | 'maces' | 'fishing_rods'
+  | 'elytra' | 'shields' | 'shears';
 
 export interface RecipeFrontmatter {
   name: string;

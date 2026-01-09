@@ -134,6 +134,7 @@ const VALID_CATEGORIES: RecipeCategory[] = [
   'swords', 'pickaxes', 'axes', 'shovels', 'hoes',
   'helmets', 'chestplates', 'leggings', 'boots',
   'bows', 'crossbows', 'tridents', 'maces', 'fishing_rods',
+  'elytra', 'shields', 'shears',
 ];
 
 const VALID_MATERIALS = [
@@ -279,6 +280,9 @@ describe('Recipe Content Validation', () => {
         tridents: 'trident',
         maces: 'mace',
         fishing_rods: 'fishing_rod',
+        elytra: 'elytra',
+        shields: 'shield',
+        shears: 'shears',
       };
 
       for (const [id, recipe] of recipes) {
@@ -454,13 +458,14 @@ describe('Recipe Content Validation', () => {
       'swords/god-sword',
       'swords/mob-farm-sword',
       'swords/pvp-sword',
+      'swords/smite-sword',
       'pickaxes/god-pickaxe',
       'pickaxes/silk-touch-pick',
       'pickaxes/fortune-pick',
       'axes/god-axe',
-      'armor/protection-helmet',
+      'armor/slayer-helmet',
       'armor/protection-chestplate',
-      'armor/protection-boots',
+      'armor/slayer-boots',
     ];
 
     it.each(requiredRecipes)('has %s recipe', (recipeId) => {

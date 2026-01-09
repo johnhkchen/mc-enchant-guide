@@ -210,8 +210,8 @@
   content: '';
   position: absolute;
   bottom: calc(100% + var(--tree-connector-height) + 2px);
-  left: calc(50% - 1px);
-  width: calc(50% + var(--tree-horizontal-gap) / 2 + 1px);
+  left: 50%;
+  width: calc(50% + var(--tree-horizontal-gap) / 2);
   border-bottom: var(--tree-connector-width) solid var(--tree-connector-color);
 }
 
@@ -236,8 +236,8 @@
   content: '';
   position: absolute;
   bottom: calc(100% + var(--tree-connector-height) + 2px);
-  right: calc(50% - 1px);
-  width: calc(50% + var(--tree-horizontal-gap) / 2 + 1px);
+  right: 50%;
+  width: calc(50% + var(--tree-horizontal-gap) / 2);
   border-bottom: var(--tree-connector-width) solid var(--tree-connector-color);
 }
 

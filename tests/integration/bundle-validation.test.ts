@@ -230,71 +230,75 @@ describe('bundle collection', () => {
 // ─────────────────────────────────────────────────────────────
 
 describe('specific bundles', () => {
-  describe('starter-kit', () => {
+  describe('starter-pack', () => {
     it('should exist', () => {
-      const bundle = getBundle('starter-kit');
+      const bundle = getBundle('starter-pack');
       expect(bundle).toBeDefined();
     });
 
-    it('should have recommended items', () => {
-      const bundle = getBundle('starter-kit');
-      expect(bundle?.recipeIds).toContain('swords/god-sword');
-      expect(bundle?.recipeIds).toContain('pickaxes/god-pickaxe');
+    it('should have essential items', () => {
+      const bundle = getBundle('starter-pack');
+      expect(bundle?.recipeIds).toContain('pickaxes/fortune-pick');
+      expect(bundle?.recipeIds).toContain('axes/fortune-axe');
+      expect(bundle?.recipeIds).toContain('swords/looting-sword');
+      expect(bundle?.recipeIds).toContain('elytra/elytra');
     });
 
-    it('should be tagged as beginner', () => {
-      const bundle = getBundle('starter-kit');
-      expect(bundle?.tags).toContain('beginner');
+    it('should be tagged as essential', () => {
+      const bundle = getBundle('starter-pack');
+      expect(bundle?.tags).toContain('essential');
     });
   });
 
-  describe('mining-setup', () => {
+  describe('slayer', () => {
     it('should exist', () => {
-      const bundle = getBundle('mining-setup');
+      const bundle = getBundle('slayer');
       expect(bundle).toBeDefined();
     });
 
-    it('should have mining pickaxes', () => {
-      const bundle = getBundle('mining-setup');
+    it('should have smite sword and protection armor', () => {
+      const bundle = getBundle('slayer');
+      expect(bundle?.recipeIds).toContain('swords/smite-sword');
+      expect(bundle?.recipeIds).toContain('armor/protection-chestplate');
+    });
+  });
+
+  describe('gatherer', () => {
+    it('should exist', () => {
+      const bundle = getBundle('gatherer');
+      expect(bundle).toBeDefined();
+    });
+
+    it('should have fortune and silk touch pickaxes', () => {
+      const bundle = getBundle('gatherer');
       expect(bundle?.recipeIds).toContain('pickaxes/fortune-pick');
       expect(bundle?.recipeIds).toContain('pickaxes/silk-touch-pick');
     });
   });
 
-  describe('combat-kit', () => {
+  describe('builder', () => {
     it('should exist', () => {
-      const bundle = getBundle('combat-kit');
+      const bundle = getBundle('builder');
       expect(bundle).toBeDefined();
     });
 
-    it('should have god sword', () => {
-      const bundle = getBundle('combat-kit');
-      expect(bundle?.recipeIds).toContain('swords/god-sword');
+    it('should have silk touch tools', () => {
+      const bundle = getBundle('builder');
+      expect(bundle?.recipeIds).toContain('pickaxes/silk-touch-pick');
+      expect(bundle?.recipeIds).toContain('axes/silk-touch-axe');
     });
   });
 
-  describe('tool-set', () => {
+  describe('explorer', () => {
     it('should exist', () => {
-      const bundle = getBundle('tool-set');
+      const bundle = getBundle('explorer');
       expect(bundle).toBeDefined();
     });
 
-    it('should have essential tools', () => {
-      const bundle = getBundle('tool-set');
-      expect(bundle?.recipeIds).toContain('pickaxes/god-pickaxe');
-      expect(bundle?.recipeIds).toContain('axes/god-axe');
-    });
-  });
-
-  describe('sword-collection', () => {
-    it('should exist', () => {
-      const bundle = getBundle('sword-collection');
-      expect(bundle).toBeDefined();
-    });
-
-    it('should have multiple swords', () => {
-      const bundle = getBundle('sword-collection');
-      expect(bundle?.recipeIds.length).toBeGreaterThanOrEqual(2);
+    it('should have mobility items', () => {
+      const bundle = getBundle('explorer');
+      expect(bundle?.recipeIds).toContain('elytra/elytra');
+      expect(bundle?.recipeIds).toContain('tridents/riptide-trident');
     });
   });
 });
